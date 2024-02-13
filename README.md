@@ -26,7 +26,7 @@ working with GO and tinker around.
                       └──────────┘
 ```
 
-## Example
+## Example configuration
 
 See `etc/archivar.yaml.dist` for a full example.
 
@@ -55,23 +55,6 @@ Archivers:
       Password:
       Server: https://server/remote.php/dav/files/username/
       UploadDirectory: /upload/
-```
-
-```yaml
-# docker-compose.yml
-# with bind-mount
-version: "2.3"
-
-services:
-  archivar:
-    image: docker.pkg.github.com/rwese/archivar/archivar:latest
-    ## semver images
-    # image: docker.pkg.github.com/rwese/archivar/archivar:0
-    # image: docker.pkg.github.com/rwese/archivar/archivar:0.2
-    # image: docker.pkg.github.com/rwese/archivar/archivar:0.2.1
-    restart: unless-stopped
-    volumes:
-      - "./etc:/etc/go-archivar"
 ```
 
 ## TODO
@@ -125,6 +108,71 @@ services:
 - [x] deamonize - let's call it "daemonized"
   - [x] graceful shutdown
 - [x] global service structgen to hold logger and other global stuff
+
+## Usage
+
+### Starting via CLI
+Starting archivar:
+```
+./archivar watch -c ./my-archivar-config.yaml
+```
+
+### Docker compose
+```yaml
+# docker-compose.yml
+# with bind-mount
+version: "2.3"
+
+services:
+  archivar:
+    image: docker.pkg.github.com/rwese/archivar/archivar:latest
+    ## semver images
+    # image: docker.pkg.github.com/rwese/archivar/archivar:0
+    # image: docker.pkg.github.com/rwese/archivar/archivar:0.2
+    # image: docker.pkg.github.com/rwese/archivar/archivar:0.2.1
+    restart: unless-stopped
+    volumes:
+      - "./etc:/etc/go-archivar"
+```
+
+### Systemd
+Add a service file to systemd (e.g. ``/etc/systemd/system/archivar.service``).
+Template (adjust for your needs):  
+```
+[Unit]
+Description=archivar
+After=network.target
+Requires=network.target
+
+[Service]
+Type=simple
+
+Restart=always
+RestartSec=30
+TimeoutStartSec=0
+
+WorkingDirectory=/opt/archivar
+ReadWritePaths=/opt/archivar
+ExecStart=/opt/archivar/app watch
+
+DynamicUser=yes
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
+
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=archivar
+
+[Install]
+WantedBy=multi-user.target
+```
+Start service:  
+```bash
+systemctl daemon-reload
+systemctl start archivar
+systemctl enable archivar # auto-start after boot
+```
 
 ## Jobs
 
