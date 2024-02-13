@@ -344,6 +344,8 @@ func (i *Imap) GetMessages(messageChan chan *imap.Message) (err error) {
 
 		err := i.processInboxMessages(inbox, messageChan)
 		if err != nil {
+			i.logger.Fatalf("Failed to process inbox '%s': %s", inbox, err.Error())
+			close(messageChan)
 			return nil
 		}
 	}
