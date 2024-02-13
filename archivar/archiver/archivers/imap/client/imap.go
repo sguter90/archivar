@@ -277,7 +277,9 @@ func (m mailData) getFileName(fileName string, fileNamePattern string, timestamp
 	pattern := m.getNamingPattern(timestampFormat)
 	pattern.add("attachment_filename", fileName)
 
-	return pattern.format(fileNamePattern)
+	s := pattern.format(fileNamePattern)
+	rx := regexp.MustCompile(`[[:space:]]+`)
+	return strings.TrimSpace(rx.ReplaceAllString(s, " "))
 }
 
 func (i Imap) FlagAndDeleteMessages(readMsgSeq *imap.SeqSet) (err error) {
